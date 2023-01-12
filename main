@@ -1,0 +1,66 @@
+#include <string>
+#include <vector>
+
+using namespace std;
+
+// 간단하게 최대 수용량을 가장 먼 집부터 빼면서 계산해나가는 방식이다.
+// 가장 최단 방법은 가장 먼 집을 먼저 처리하고 돌아오는 길에 서브적으로 처리하는 것이 가장 최단방법이다.
+// 그러므로 복잡한 계산이 필요 없이 가장 먼 집 거리를 *2해서 더하고 최대수용량을 각 집에서 요구하는 수치만큼 뺀다.
+// 그리고 그 다음으로 멀리 있는 집으로 가서 (즉, 돌아오는길) 같은 연산을 한다.
+// 이때, 수거와 배달은 독립적으로 계산한다. 서로 아무런 영향이 없으므로 가능하다. 
+// 만약, 수거 수치와 배달 수치 중 1개라도 음수가 된다면 (최대 수용량을 벗어났으므로 다시 초기로 돌아가야 한다.)
+// 현재 위치에서 거리*2만큼 답에 더해주고 음수가 생기지 않게 보정해준다.
+// 가장 가까운 집에 올 때까지 위와 같은 방식을 해주면 된다.
+//
+
+long long solution(int cap, int n, vector<int> deliveries, vector<int> pickups) {
+    long long answer = 0;
+    for (int i = deliveries.size() - 1; i >= 0; i--)
+    {
+        // 가장 멀리있는 집들이 요구수치가 전혀 없을 경우 바로 제외시킨다. 
+        if (deliveries[i] == 0 && pickups[i] == 0)
+        {
+            deliveries.pop_back();
+            pickups.pop_back();
+        }
+        else
+        {
+            break;
+        }
+    }
+    
+    int dNum = cap; // 배달 수치
+    int pNum = cap; // 픽업 수치
+    answer += deliveries.size()*2; // 최초 가장 먼 집에 대한 거리를 더해준다.
+    for (int i = deliveries.size() - 1; i >= 0; i--)
+    {
+        int togle = 0; // 배달이나 픽업 수치 중 1개라도 음수가 될경우 토글 값을 변경하여 이벤트를 발생하게함
+        dNum -= deliveries[i];
+        deliveries[i] = 0;
+        if (dNum < 0)
+        {
+            // 음수값 보정
+            deliveries[i] -= dNum;
+            dNum = 0;
+            togle = 1;
+        }
+        pNum -= pickups[i];
+        pickups[i] = 0;
+        if (pNum < 0)
+        {
+            // 음수값 보정
+            pickups[i] -= pNum;
+            pNum = 0;
+            togle = 1;
+        }
+        if (togle)
+        {
+            // 이벤트가 발생, 처음 위치에 갔다왔다고 가정하고 수치값에 최대 수용량을 더해준다.
+            answer += (i+1) * 2;
+            dNum += cap;
+            pNum += cap;
+            i++;
+        }
+    }
+    return answer;
+}
